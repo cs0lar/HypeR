@@ -1,6 +1,9 @@
-import numpy as np
 import math
+
+import numpy as np
+
 from bitarray import bitarray
+from bitarray.util import count_xor
 
 class Hypervector:
 	"""
@@ -48,6 +51,9 @@ class BinaryHypervector( Hypervector ):
 		It permutes the underlying bitarray using a right circular shift
 		of count c.
 
+	hamming( X, Y )
+		Static method that computes the Hamming distance between two binary hypervectors.
+
 	"""
 	def __init__( self, hv ):
 
@@ -76,9 +82,7 @@ class BinaryHypervector( Hypervector ):
 			A random binary hypervector.
 
 		"""
-		boolvec = rng.random( d ) > .5
-
-		hv = bitarray( boolvec.tolist() )
+		hv = bitarray( rng.integers( 2, size=d ).tolist() )
 
 		return BinaryHypervector( hv=hv )
 
@@ -203,6 +207,33 @@ class BinaryHypervector( Hypervector ):
 
 		return BinaryHypervector( hv=hv )
 
+
+	@staticmethod
+	def hamming( X, Y ):
+		"""
+		It computes the Hamming distance between binary hypervectors X and Y.
+
+		Parameters
+		----------
+
+		X : BinaryHypervector
+			A binary hypervector
+
+		Y : BinaryHypervector
+			A binary hypervector
+
+		Returns
+		-------
+
+		float
+			The Hamming distance between X and Y. If `hamming( X, Y )` = .5 then
+			X and Y are orthogonal or dissimilar. X and Y are diametrically opposite
+			when `hamming( X, Y )` = 1.
+
+		"""
+		d = len( X )
+
+		return count_xor( X._hv, Y._hv ) / d
 
 	def __str__( self ):
 		"""
