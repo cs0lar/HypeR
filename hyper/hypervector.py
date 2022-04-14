@@ -249,6 +249,28 @@ class BinaryHypervector( Hypervector ):
 		"""
 		return str( self._hv.tolist() )
 
+	def __eq__( self, other ):
+		"""
+		It overrides the magic `__eq__` function in order to support
+		comparison of two binary hypervectors.
+
+		Parameters
+		----------
+
+		other : BinaryHypervector
+			A binary hypervector to compare with self.
+
+		Returns
+		-------
+
+		boolean
+			`True` if the underlying bitarrays are equal, `False` otherwise.
+		"""
+		if isinstance( other, BinaryHypervector ):
+			return self._hv == other._hv
+
+		raise False
+
 
 if __name__ == '__main__':
 	
