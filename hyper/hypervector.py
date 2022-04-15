@@ -54,6 +54,11 @@ class BinaryHypervector( Hypervector ):
 	hamming( X, Y )
 		Static method that computes the Hamming distance between two binary hypervectors.
 
+	mul( A, B )
+		Static method that performs the binding operation which for binary hypervectors 
+		takes for form of the XOR operator.
+
+	
 	"""
 	def __init__( self, hv ):
 
@@ -126,16 +131,22 @@ class BinaryHypervector( Hypervector ):
 		return self._hv[ i ]
 
 
-	def permute( self, c=1 ):
+	def permute( self, c=1, inverse=False ):
 		"""
 		It computes a permutation of the underlying bitarray based on right circular shift of 
-		count `c`. Refer to: https://en.wikipedia.org/wiki/Circular_shift
+		count `c`. Refer to: https://en.wikipedia.org/wiki/Circular_shift. If `inverse` is `True`
+		it computes left circular shift.
 
 		Parameters
 		----------
 
 		c : int
 			The amount of shift to apply.
+
+		inverse : boolean
+			Whether to perform a left or right circular shift. Default is `False`, 
+			i.e. right circular shift.
+
 
 		Returns
 		-------
@@ -146,7 +157,13 @@ class BinaryHypervector( Hypervector ):
 		"""
 		l = len( self._hv )
 
-		self._hv = self._hv >> c | self._hv << ( l - c )
+		if inverse:
+
+			self._hv = self._hv << c | self._hv >> ( l - c )
+
+		else:
+
+			self._hv = self._hv >> c | self._hv << ( l - c )
 
 		return self
 
@@ -209,6 +226,34 @@ class BinaryHypervector( Hypervector ):
 
 
 	@staticmethod
+	def mul( A, B ):
+		"""
+		It performs a binding operation, binding A and B together for form X = A*B.
+		For binary hypervectors the binding operation is the XOR operation.
+
+		Parameters
+		----------
+
+		A : BinaryHypervector
+			A binary hypervector
+
+		B : BinaryHypervector
+			A binary hypervector
+
+		Returns
+		-------
+
+		BinaryHypervector
+			XOR( A, B )
+
+		"""
+
+		xor = A._hv ^ B._hv
+
+		return BinaryHypervector( hv=xor )
+		
+
+	@staticmethod
 	def hamming( X, Y ):
 		"""
 		It computes the Hamming distance between binary hypervectors X and Y.
@@ -234,6 +279,7 @@ class BinaryHypervector( Hypervector ):
 		d = len( X )
 
 		return count_xor( X._hv, Y._hv ) / d
+
 
 	def __str__( self ):
 		"""
@@ -272,31 +318,4 @@ class BinaryHypervector( Hypervector ):
 		raise False
 
 
-if __name__ == '__main__':
-	
-	rng = np.random.default_rng( 1233456 )
-		
-	A = BinaryHypervector.new( 10, rng )
-	B = BinaryHypervector.new( 10, rng )
-	C = BinaryHypervector.new( 10, rng )
-
-	print ( A, B, C )
-
-	A = BinaryHypervector( hv=bitarray( '0000110011' ) )
-	B = BinaryHypervector( hv=bitarray( '1011000101' ) )
-	C = BinaryHypervector( hv=bitarray( '0010101101' ) )
-
-	Z = BinaryHypervector.sum( A, B, C )
-
-	print ( Z )
-
-	D = BinaryHypervector( hv=bitarray( '0000110011' ) )
-	print ( D )
-	rhoA = D.permute()
-
-	print( rhoA )
-
-	F = BinaryHypervector.new( 10000, rng )
-
-	print( F._hv.count() )
 
