@@ -64,6 +64,9 @@ class BinaryHypervector( Hypervector ):
 
 		super().__init__( hv )
 
+		if self._hv and isinstance( self._hv, str ):
+
+			self._hv = bitarray( self._hv )
 
 	@staticmethod
 	def new( d, rng ):

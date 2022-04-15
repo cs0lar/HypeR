@@ -29,8 +29,8 @@ class TestBinaryHipervector( unittest.TestCase ):
 
 	def testHamming( self ):
 
-		A = BinaryHypervector( hv=bitarray( '0000110011' ) )
-		B = BinaryHypervector( hv=bitarray( '1011000101' ) )
+		A = BinaryHypervector( hv='0000110011' )
+		B = BinaryHypervector( hv='1011000101' )
 
 		expected = .7
 		actual = BinaryHypervector.hamming( A, B )
@@ -40,16 +40,16 @@ class TestBinaryHipervector( unittest.TestCase ):
 
 	def testPermute( self ):
 
-		D = BinaryHypervector( hv=bitarray( '0000110011' ) )
+		D = BinaryHypervector( hv='0000110011' )
 
-		expected = BinaryHypervector( hv=bitarray( '0110000110' ) )
+		expected = BinaryHypervector( hv='0110000110' )
 		
 		actual = D.permute( c=3 )
 
 		self.assertEqual( actual, expected )
 		self.assertEqual( D, expected )
 
-		expectedInv = BinaryHypervector( hv=bitarray( '0000110011' ) ) 
+		expectedInv = BinaryHypervector( hv='0000110011' ) 
 		actual = D.permute( c=3, inverse=True )
 
 		self.assertEqual( actual, expectedInv )
@@ -57,11 +57,11 @@ class TestBinaryHipervector( unittest.TestCase ):
 
 	def testSum( self ):
 
-		A = BinaryHypervector( hv=bitarray( '0000110011' ) )
-		B = BinaryHypervector( hv=bitarray( '1011000101' ) )
-		C = BinaryHypervector( hv=bitarray( '0010101101' ) )
+		A = BinaryHypervector( hv='0000110011' )
+		B = BinaryHypervector( hv='1011000101' )
+		C = BinaryHypervector( hv='0010101101' )
 	
-		expected = BinaryHypervector( hv=bitarray( '0010100101' ) )
+		expected = BinaryHypervector( hv='0010100101' )
 
 		actual = BinaryHypervector.sum( A, B, C )
 
@@ -70,10 +70,10 @@ class TestBinaryHipervector( unittest.TestCase ):
 
 	def testMul( self ):
 
-		A = BinaryHypervector( hv=bitarray( '0000110011' ) )
-		B = BinaryHypervector( hv=bitarray( '1011000101' ) )
+		A = BinaryHypervector( hv='0000110011' )
+		B = BinaryHypervector( hv='1011000101' )
 
-		expected = BinaryHypervector( hv=bitarray( '1011110110' ) )
+		expected = BinaryHypervector( hv='1011110110' )
 		actual = BinaryHypervector.mul( A, B )
 
 		self.assertEqual( actual, expected )
