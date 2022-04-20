@@ -74,8 +74,7 @@ class Permutation:
 			The dimensionality of the permutation map.
 
 		n : int
-			The number of additional permutations to pre-compute.
-
+			The total number of permutations to pre-compute.
 
 		Returns
 		-------
@@ -497,8 +496,8 @@ class BipolarHypervector( Hypervector ):
 
 		super().__init__( hv )
 
-
-	def new( d, rng ):
+	@classmethod
+	def new( clazz, d, rng ):
 		"""
 		It creates a new random BipolarHypervector using a numpy
 		array as underlying data type. Each element of the vector
@@ -522,13 +521,13 @@ class BipolarHypervector( Hypervector ):
 		"""
 		v = [-1, 1 ]
 
-		hv = np.array( [ v[ i ] for i in rng.integers( 2, size=d ) ] )
+		hv = np.array( [ v[ i ] for i in rng.integers( 2, size=d ) ], dtype='int32' )
 
-		return BipolarHypervector( hv=hv )
+		return clazz( hv=hv )
 
 
-	@staticmethod
-	def cosine( X, Y ):
+	@classmethod
+	def cosine( clazz, X, Y ):
 		"""	
 		It computes the cosine similarity between two bipolar hypervectors X and Y.
 
@@ -550,14 +549,14 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if Hypervector.check( 'BipolarHypervector', X, Y ):
+		if Hypervector.check( clazz.__name__, X, Y ):
 			
 			normX = np.linalg.norm( X._hv )
 			normY = np.linalg.norm( Y._hv )
 
 			return np.dot( X._hv, Y._hv ) / ( normX * normY )
 
-		raise ValueError( 'X and Y must be BipolarHypervectors' )
+		raise ValueError( f'X and Y must be {clazz.__name__}' )
 
 
 	def __len__( self ):
@@ -655,8 +654,8 @@ class BipolarHypervector( Hypervector ):
 		raise False
 
 
-	@staticmethod
-	def sum( *args ):
+	@classmethod
+	def sum( clazz, *args ):
 		"""
 		It computes the thresholded, element-wise sum of an arbitrary number of 
 		BipolarHypervectors.
@@ -676,21 +675,21 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if Hypervector.check( 'BipolarHypervector', *args ):
+		if Hypervector.check( clazz.__name__, *args ):
 
 			hv = np.vstack( [ arg._hv for arg in args ] )
 			
-			hv = np.sum( hv, axis=0 )
+			hv = np.sum( hv, axis=0, dtype='int32' )
 
 			hv[ hv > 0 ] = 1
 			hv[ hv <= 0 ] = -1
 			
-			return BipolarHypervector( hv=hv )
+			return clazz( hv=hv )
 
-		raise ValueError( 'All inputs must be BipolarHypervectors' )
+		raise ValueError( f'All inputs must be {clazz.__name__}' )
 
-	@staticmethod
-	def mul( A, B ):
+	@classmethod
+	def mul( clazz, A, B ):
 		"""
 		It performs a binding operation, binding A and B together for form X = A*B.
 		For bipolar hypervectors the binding operation is element-wise multiplication.
@@ -712,11 +711,11 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if Hypervector.check( 'BipolarHypervector', A, B ):
+		if Hypervector.check( clazz.__name__, A, B ):
 			
-			return BipolarHypervector( hv=np.multiply( A._hv, B._hv ) )
+			return clazz( hv=np.multiply( A._hv, B._hv, dtype='int32' ) )
 		
-		raise ValueError( 'A and B must be BipolarHypervectors' )
+		raise ValueError( f'A and B must be {clazz.__name__}' )
 
 		
 
