@@ -1,5 +1,6 @@
+import time, sys
+
 import numpy as np
-import time
 
 from hyper.hypervector import Permutation, BipolarHypervector
 
@@ -126,7 +127,7 @@ if __name__ == '__main__':
 
 		return ''.join( c for c in string if c in alphabet )
 
-	with open( '/home/cs0lar/AI/datasets/eng_news_2020_30K/eng_news_2020_30K-sentences.txt', 'r' ) as f:
+	with open( sys.argv[ 1 ], 'r' ) as f:
 		
 		lines = [ process( line.split( '\t' )[ 1 ].lower(), Alphabet.ALPHABET ) for line in f ]
 		
