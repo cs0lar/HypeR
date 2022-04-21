@@ -490,7 +490,10 @@ class BipolarHypervector( Hypervector ):
 		Static method that performs the binding operation which for bipolar hypervectors 
 		takes of element-wise product.
 
-	
+	threshold( )
+		It threholds the underlying numpy array to bipolar values. Useful after iterated
+		`BypolarHypervector` sums.
+
 	"""
 	def __init__( self, hv ):
 
@@ -657,7 +660,7 @@ class BipolarHypervector( Hypervector ):
 	@classmethod
 	def sum( clazz, *args ):
 		"""
-		It computes the thresholded, element-wise sum of an arbitrary number of 
+		It computes the element-wise sum of an arbitrary number of 
 		BipolarHypervectors.
 
 		Parameters
@@ -670,7 +673,7 @@ class BipolarHypervector( Hypervector ):
 		-------
 
 		BipolarHypervector
-			A new BipolarHypervector representing the thresholded, element-wise sum 
+			A new BipolarHypervector representing the element-wise sum 
 			of the input BipolarHypervectors.
 
 		"""
@@ -681,12 +684,30 @@ class BipolarHypervector( Hypervector ):
 			
 			hv = np.sum( hv, axis=0, dtype='int32' )
 
-			hv[ hv > 0 ] = 1
-			hv[ hv <= 0 ] = -1
-			
 			return clazz( hv=hv )
 
 		raise ValueError( f'All inputs must be {clazz.__name__}' )
+
+	def threshold( self ):
+		"""
+		It thresholds the underlying numpy array so that each value is bipolar.
+		This is decoupled from the `sum` method in order to support iterated 
+		sums and thresholding of the final result as otherwise thresholded sums
+		might converge very quickly.
+
+		Returs
+		-------
+		
+		BipolarHypervector
+			It returns `self` with the underlying numpy array thrsholded to bipolar values,
+			specifically, values greater than 0 are thresholded to 1 and values equal to
+			or less than 0 are thresholded to -1.
+
+		"""
+		self._hv[ self._hv > 0 ] = 1
+		self._hv[ self._hv <= 0 ] = -1
+
+		return self
 
 	@classmethod
 	def mul( clazz, A, B ):
