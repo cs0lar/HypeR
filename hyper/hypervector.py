@@ -5,104 +5,6 @@ import numpy as np
 from bitarray import bitarray
 from bitarray.util import count_xor
 
-class Permutation:
-	"""
-	Utility class to generate fixed, pre-computed permutations as lists
-	of integers. When encoding sequences in Hyperdimensional computing
-	a permutation operator is applied multiple times to a given vector
-	depending on its position in the sequence. For example, if an n-gram
-	of length 4 like GRAB is being encoded, the vector corresponding to 
-	the G character will be permuted three times: \rho( \rho( \rho( G ) ) ). 
-	Note that the permutation is fixed and simply applied multiple times.
-	After the `generate` method is executed, the fixed, base permutation 
-	can be retrieved at index 0 of the `Permutation` object: i.e. `perm[0]`.
-	If `n` > 1 is supplied to the `generate` method, then `perm[ i ]` for 
-	`i` \in { 1, ..., n-1 } will return a permutation that when applied 
-	to input X is equivalent to applying the base permutation on
-	X i+1 times, for example ( with a slight abuse of notation ), 
-	`perm[ 1 ]`( X ) = `perm[ 0 ]`( `perm[ 0 ]`( X ) ).
-
-	Attributes
-	----------
-
-	_rng : Generator
-		A random number generator for generating random permutations. Default is `None`.
-
-	_perms : list 
-		A list where each element is a permutation in the form of a list {\rho(0}, ..., \rho(m}}
-		where \rho: {1, ..., m} -> {1, ..., m}.
-
-	Methods
-	-------
-
-	generate( d, n )
-		It generates a base permutation \rho of length `d` and pre-computes additional n-1
-		compositions of the base permutation such that `perm[ i ]`( X ) = \rho^{i+1}( X )
-		e.g. `perm[ 2 ]`( X ) = \rho( \rho( \rho( X ) ) ).
- 
-	"""
-
-	def __init__( self, rng=None ):
-		"""
-		Creates a new `Permutation` using an optionally 
-		given random number `Generator`.
-
-		Parameters
-		----------
-
-		rng : Generator
-			A `Generator` to use for generating random permutations. 
-			If `None` is passed, a default `Generator` is instantiated.
-
-		"""
-		if rng is None:
-			rng = np.random.default_rng()
-
-		self._rng = rng
-
-
-	def generate( self, d, n ):
-		"""
-		It generates a base permutation \rho of length `d` and pre-computes additional n-1
-		compositions of the base permutation such that `perm[ i ]`( X ) = \rho^{i+1}( X )
-		e.g. `perm[ 2 ]`( X ) = \rho( \rho( \rho( X ) ) ).
-
-		Parameters
-		----------
-
-		d : int
-			The dimensionality of the permutation map.
-
-		n : int
-			The total number of permutations to pre-compute.
-
-		Returns
-		-------
-
-		Permutation
-			It returns itself after the underlying list of permutations has been computed.
-
-		"""
-		perm = self._rng.permutation( d )
-		self._perms = [ np.zeros( ( 1, d ), dtype=int ) ]
-
-		self._perms[ 0 ] = perm
-
-		[ self._perms.append( self._perms[ i ][ perm ] ) for i in range( n - 1 ) ]
-
-		return self
-
-
-	def __getitem__( self, i ):
-
-		return self._perms[ i ]
-
-
-	def __len__( self ):
-
-		return len( self._perms )
-
-
 class Hypervector:
 	"""
 	Base class for all hyper vector types ( e.g. binary, bipolar, integer )
@@ -580,18 +482,13 @@ class BipolarHypervector( Hypervector ):
 		return len( self._hv )
 
 
-	def permute( self, perm, c=1 ):
+	def permute( self, c=1 ):
 		"""
-		It computes a permutation of the underlying numpy array based on 
-		the given, fixed `Permutation` `perm`. The fixed permutation is 
-		applied `c` times.
+		It computes a permutation of the underlying numpy array using right-cyclic shift
+		(rotate by one coordinate position). The permutation is applied `c` times.
 
 		Parameters
 		----------
-
-		perm: Permutation
-			A `Permutation` object supplying permutations as lists of
-			integers of length equal to the dimensionality of this hypervector.
 
 		c : int
 			The number of permutations to apply.
@@ -604,19 +501,7 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if not isinstance( perm, Permutation ):
-
-			raise ValueError( 'perm must be an instance of Permutation' )
-
-		if c >= 1:
-
-			permutation = perm[ c-1 ]
-
-			if len( permutation ) != len( self ):
-
-				raise ValueError( f'perm must contain permutations of length {len( self )}' )
-
-			self._hv = self._hv[ permutation ]
+		self._hv = np.concatenate( ( self._hv[ -c: ], self._hv[ :-c ] ) )
 
 		return self
 

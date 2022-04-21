@@ -2,7 +2,9 @@ import time, sys
 
 import numpy as np
 
-from hyper.hypervector import Permutation, BipolarHypervector
+from tqdm import tqdm
+
+from hyper.hypervector import BipolarHypervector
 
 class Alphabet():
 
@@ -25,18 +27,13 @@ class TextEncoding():
 	"""
 	Implementation of https://link.springer.com/chapter/10.1007/978-3-319-52289-0_21
 	"""
-	def __init__( self, alphabet, perm, n ):
+	def __init__( self, alphabet, n ):
 		
 		if not alphabet or not isinstance( alphabet, Alphabet ):
 
 			raise ValueError( 'alphabet must be an instance of hyper.encodings.text.Alphabet' )
-
-		if not perm or not isinstance( perm, Permutation ):
-
-			raise ValueError( 'perm must be an instance of hyper.hypervector.Permutation' )
 		
 		self._alphabet = alphabet
-		self._perm = perm 
 		self._n = n 
 
 	def encodengram( self, ngram ):
@@ -48,9 +45,9 @@ class TextEncoding():
 
 			l = len( ngram )
 
-			A = self._alphabet[ ngram[ 0 ] ].permute( self._perm, c=( l-1 ) )
+			A = self._alphabet[ ngram[ 0 ] ].permute( c=( l-1 ) )
 
-			[ mul( A, self._alphabet[ ngram[ i ] ].permute( self._perm, c=( l-i-1 ) ) ) for i in range( 1, l ) ]
+			[ mul( A, self._alphabet[ ngram[ i ] ].permute( c=( l-i-1 ) ) ) for i in range( 1, l ) ]
 
 			return A 
 
@@ -85,39 +82,32 @@ class TextEncoding():
 		# the last block we computed
 		V = BipolarHypervector( hv=A._hv )
 		
-		[ A.add( self.encodeblock( text[ i ], text[ i+step ], step, V ) ) for i in range( len( text )-step  ) ]
+		[ A.add( self.encodeblock( text[ i ], text[ i+step ], step, V ) ) for i in tqdm( range( len( text )-step  ) ) ]
 
 		return A.threshold()
 
 	def encodeblock( self, v, w, n, A ):
 
-		V = self._alphabet[ v ].permute( self._perm, c=( n-1 ) )
+		V = self._alphabet[ v ].permute( c=( n-1 ) )
 		W = self._alphabet[ w ]
 
 		V = BipolarHypervector.mul( V, A )
-		V.permute( self._perm, c=1 )
+		V.permute( c=1 )
 
 		A._hv = BipolarHypervector.mul( V, W )._hv 
-
 		return A
-
 
 
 
 if __name__ == '__main__':
 	
 	d = 10000
-	n = 5
+	n = 4
 	rng = np.random.default_rng(  )
 
-	perm = Permutation( rng=rng )
-
-	# an n-gram requires n-1 permutations
-	perm.generate( d, n - 1 )
-	
 	alphabet = Alphabet( d=d, rng=rng )
 
-	encoding = TextEncoding( alphabet, perm, n )
+	encoding = TextEncoding( alphabet, n )
 
 	def process( string, alphabet ):
 
@@ -127,7 +117,7 @@ if __name__ == '__main__':
 		
 		lines = [ process( line.split( '\t' )[ 1 ].lower(), Alphabet.ALPHABET ) for line in f ]
 		
-	text = ' '.join( lines )[ :100000 ]
+	text = ' '.join( lines )[ :1000000 ]
 	start = time.time()
 	textVector = encoding.encode( text ) 
 	print( f'finished in {time.time() - start} seconds' )
