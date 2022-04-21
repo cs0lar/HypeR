@@ -89,7 +89,6 @@ class TextEncoding():
 		V = BipolarHypervector( hv=A._hv )
 		
 		[ add( A, self.encodeblock( text[ i ], text[ i+step ], step, V ) ) for i in range( len( text )-step  ) ]
-		# [ add( A, self.encodengram( text[ i:i+step ] ) ) for i in range( 0, len( text ) - step + 1 ) ]
 
 		return A.threshold()
 
@@ -111,7 +110,7 @@ class TextEncoding():
 if __name__ == '__main__':
 	
 	d = 10000
-	n = 4
+	n = 5
 	rng = np.random.default_rng(  )
 
 	perm = Permutation( rng=rng )

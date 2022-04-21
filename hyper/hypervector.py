@@ -656,9 +656,8 @@ class BipolarHypervector( Hypervector ):
 
 		raise False
 
-
-	@classmethod
-	def sum( clazz, *args ):
+	@staticmethod
+	def sum( *args ):
 		"""
 		It computes the element-wise sum of an arbitrary number of 
 		BipolarHypervectors.
@@ -678,15 +677,14 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if Hypervector.check( clazz.__name__, *args ):
+		if len( args ) == 2:
+			return BipolarHypervector( hv=np.add( args[0]._hv, args[1]._hv ) )
+		
+		hv = np.vstack( [ arg._hv for arg in args ] )
+		
+		hv = np.sum( hv, axis=0, dtype='int32' )
 
-			hv = np.vstack( [ arg._hv for arg in args ] )
-			
-			hv = np.sum( hv, axis=0, dtype='int32' )
-
-			return clazz( hv=hv )
-
-		raise ValueError( f'All inputs must be {clazz.__name__}' )
+		return BipolarHypervector( hv=hv )
 
 	def threshold( self ):
 		"""
@@ -709,8 +707,8 @@ class BipolarHypervector( Hypervector ):
 
 		return self
 
-	@classmethod
-	def mul( clazz, A, B ):
+	@staticmethod
+	def mul( A, B ):
 		"""
 		It performs a binding operation, binding A and B together for form X = A*B.
 		For bipolar hypervectors the binding operation is element-wise multiplication.
@@ -731,12 +729,7 @@ class BipolarHypervector( Hypervector ):
 			A * B
 
 		"""
-
-		if Hypervector.check( clazz.__name__, A, B ):
-			
-			return clazz( hv=np.multiply( A._hv, B._hv, dtype='int32' ) )
-		
-		raise ValueError( f'A and B must be {clazz.__name__}' )
+		return BipolarHypervector( hv=np.multiply( A._hv, B._hv, dtype='int32' ) )
 
 		
 
