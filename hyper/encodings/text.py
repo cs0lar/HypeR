@@ -79,16 +79,13 @@ class TextEncoding():
 		start = 0
 		step = self._n
 
-		def add( A, B ):
-			A._hv = BipolarHypervector.sum( A, B )._hv
-
 		# the running vector sum
 		A = self.encodengram( text[ 0:step ] )
 
 		# the last block we computed
 		V = BipolarHypervector( hv=A._hv )
 		
-		[ add( A, self.encodeblock( text[ i ], text[ i+step ], step, V ) ) for i in range( len( text )-step  ) ]
+		[ A.add( self.encodeblock( text[ i ], text[ i+step ], step, V ) ) for i in range( len( text )-step  ) ]
 
 		return A.threshold()
 

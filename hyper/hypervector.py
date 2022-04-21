@@ -494,6 +494,9 @@ class BipolarHypervector( Hypervector ):
 		It threholds the underlying numpy array to bipolar values. Useful after iterated
 		`BypolarHypervector` sums.
 
+	add( B )
+		It adds `B` bipolar values to `self`.
+
 	"""
 	def __init__( self, hv ):
 
@@ -685,6 +688,18 @@ class BipolarHypervector( Hypervector ):
 		hv = np.sum( hv, axis=0, dtype='int32' )
 
 		return BipolarHypervector( hv=hv )
+
+	def add( self, other ):
+		"""
+		Convenience method that adds a bipolar vector to `self`, useful for 
+		speeding up iterated sums.
+
+		Parameters
+		----------
+
+		other : BipolarHypervector
+		"""
+		self._hv = np.add( self._hv, other._hv )
 
 	def threshold( self ):
 		"""
