@@ -629,7 +629,8 @@ class BipolarHypervector( Hypervector ):
 			A * B
 
 		"""
-		return BipolarHypervector( hv=np.multiply( A._hv, B._hv, dtype='int32' ) )
+
+		return BipolarHypervector( hv=A._hv * B._hv )
 
 		
 
