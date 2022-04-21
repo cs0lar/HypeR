@@ -350,7 +350,7 @@ class BinaryHypervector( Hypervector ):
 			if ( len( vecs ) % 2 ) == 0:
 				# to avoid 0 bias when the number of hypervectors to sum 
 				# is even, we add a random hypervector to make the number odd.
-				vecs.append( BinaryHypervector.new( l ) )
+				vecs.append( BinaryHypervector.new( l, np.random.default_rng() ) )
 
 			hv = bitarray( [ BinaryHypervector.majority( bitarray( [ vec[ i ] for vec in vecs ] ) ) for i in range( l ) ] )
 
@@ -692,8 +692,8 @@ class BipolarHypervector( Hypervector ):
 		"""
 		It thresholds the underlying numpy array so that each value is bipolar.
 		This is decoupled from the `sum` method in order to support iterated 
-		sums and thresholding of the final result as otherwise thresholded sums
-		might converge very quickly.
+		sums and thresholding of the final result as otherwise sums of thresholded
+		vectors might converge very quickly.
 
 		Returs
 		-------
