@@ -6,7 +6,7 @@ from bitarray import bitarray
 
 from tqdm import tqdm
 
-from hyper.hypervector import Permutation, BinaryHypervector, BipolarHypervector
+from hyper.hypervector import BinaryHypervector, BipolarHypervector
 
 import matplotlib.pyplot as plt
 
@@ -169,27 +169,15 @@ class TestBipolaripervector( unittest.TestCase ):
 
 	def testPermute( self ):
 
-		numPerms = 4
-		dims = 10000
+		D = BipolarHypervector( hv=np.array( [ -1, -1, -1, -1, 1, 1, -1, -1, 1, 1 ] ) )
 
-		rng = np.random.default_rng()
+		expected = BipolarHypervector( hv=np.array( [ -1, 1, 1, -1, -1, -1, -1, 1, 1, -1 ] ) )
+		
+		actual = D.permute( c=3 )
 
-		perms = Permutation( rng=rng )
+		self.assertEqual( actual, expected )
+		self.assertEqual( D, expected )
 
-		perms.generate( dims, numPerms )
-
-		basePerm = perms[ 0 ]
-
-		hv = BipolarHypervector.new( dims, rng )._hv
-		v = np.array( hv )
-
-		for i in range( numPerms ):
-			
-			w = BipolarHypervector( hv=hv )
-
-			self.assertEqual( w.permute( perms, c=i ), BipolarHypervector( hv=v ) )
-
-			v = v[ basePerm ]
 
 	def testCosine( self ):
 

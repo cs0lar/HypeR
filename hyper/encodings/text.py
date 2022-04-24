@@ -1,14 +1,21 @@
-import time, sys
+import time, sys, re
 
 import numpy as np
 
 from tqdm import tqdm
 
+import matplotlib.pyplot as plt
+
+from unidecode import unidecode
+
+from sklearn.manifold import TSNE
+
 from hyper.hypervector import BipolarHypervector
+
 
 class Alphabet():
 
-	ALPHABET = [ chr( i ) for i in range( 32, 65 ) ] + [ chr( i ) for i in range( 91, 127 ) ]
+	ALPHABET = [ chr( 32 ) ] + [ chr( i ) for i in range( 97, 123 ) ]
 
 	def __init__( self, d, rng, alphabet=ALPHABET ):
 
@@ -43,11 +50,11 @@ class TextEncoding():
 
 		try:
 
-			l = len( ngram )
+			n = len( ngram )
 
-			A = self._alphabet[ ngram[ 0 ] ].permute( c=( l-1 ) )
+			A = self._alphabet[ ngram[ 0 ] ].permute( c=( n-1 ) )
 
-			[ mul( A, self._alphabet[ ngram[ i ] ].permute( c=( l-i-1 ) ) ) for i in range( 1, l ) ]
+			[ mul( A, self._alphabet[ ngram[ i ] ].permute( c=( n-i-1 ) ) ) for i in range( 1, n ) ]
 
 			return A 
 
@@ -55,9 +62,6 @@ class TextEncoding():
 
 			raise ValueError( f'key {e.args[ 0 ]} not in alphabet' )
 
-		except IndexError as e:
-
-			raise ValueError( f'encoding ngram={ngram} requires more precomputed permutations that are available' )
 
 	def encode( self, entity ):
 
@@ -101,23 +105,97 @@ class TextEncoding():
 
 if __name__ == '__main__':
 	
+	langs = [
+
+		'bul_news_2020_30K',
+		'ces_news_2020_30K',
+		'dan_news_2020_30K',
+		'deu_news_2021_30K',
+		'ell_news_2020_30K',
+		'eng_news_2020_30K',
+		'est_news_2020_30K',
+		'fin_news_2020_30K',
+		'fra_news_2020_30K',
+		'hun_news_2020_30K',
+		'ita_news_2020_30K',
+		'lav_news_2020_30K',
+		'lit_news_2020_30K',
+		'nld_news_2020_30K',
+		'pol_news_2020_30K',
+		'por_news_2020_30K',
+		'ron_news_2020_30K',
+		'slk_news_2020_30K',
+		'slv_news_2020_30K',
+		'spa_news_2020_30K',
+		'swe_news_2020_30K'	
+	
+	]
+
+	labels = [
+
+		'bul', 'ces', 'dan', 'deu', 'ell', 'eng',
+		'est', 'fin', 'fra', 'hun', 'ita', 'lav',
+		'lit', 'nld', 'pol', 'por', 'ron', 'slk',
+		'slv', 'spa', 'swe'
+
+	]
+	
+	suffix = '-sentences.txt'
+
 	d = 10000
 	n = 4
+	l = len( langs )
 	rng = np.random.default_rng(  )
 
 	alphabet = Alphabet( d=d, rng=rng )
 
 	encoding = TextEncoding( alphabet, n )
 
+	regex = re.compile( r'[\W\d\s]+' )
+
 	def process( string, alphabet ):
 
-		return ''.join( c for c in string if c in alphabet )
+		unidecoded = unidecode( string ).lower()
+		unidecoded = regex.sub( ' ', unidecoded )
+		out = ''.join( c for c in unidecoded )
 
-	with open( sys.argv[ 1 ], 'r' ) as f:
+		return out
+
+	base = sys.argv[ 1 ]
+	L = []
+
+	for i, lang in enumerate( langs ):
+		with open( f'{base}/{lang}/{lang}{suffix}', 'r' ) as f:
 		
-		lines = [ process( line.split( '\t' )[ 1 ].lower(), Alphabet.ALPHABET ) for line in f ]
+			lines = [ process( line.split( '\t' )[ 1 ].lower(), Alphabet.ALPHABET ) for line in f ]
 		
-	text = ' '.join( lines )[ :1000000 ]
-	start = time.time()
-	textVector = encoding.encode( text ) 
-	print( f'finished in {time.time() - start} seconds' )
+		text = ' '.join( lines )[ :1000000 ]
+
+		textVector = encoding.encode( text ) 
+		L.append( textVector )
+
+	D = np.zeros( ( l, l ) )
+
+	for i in range( l ):
+		for j in range( l ):
+			D[ i, j ] = BipolarHypervector.cosine( L[ i ], L[ j ] )
+	
+	embed = TSNE( n_components=2, learning_rate='auto', metric='precomputed', init='random', square_distances=True ).fit_transform( D )
+
+	markers = [ 
+
+		'o', 'v', '^', '<', '>', '1', '2', '3', 
+		'4', '8', 's', 'p', '*', 'h', 'H', '+',
+		'x', 'X', 'D', 'd', '|'
+
+	]
+
+	cmap = plt.cm.get_cmap( 'hsv', l )
+
+	for i in range( l ):
+		x, y = embed[ i ]
+		plt.scatter( x, y, color=cmap( i ), alpha=0.5, marker=markers[ i ] )
+	
+	plt.legend( labels )
+
+	plt.show()
