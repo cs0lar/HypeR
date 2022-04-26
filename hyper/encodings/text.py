@@ -1,5 +1,7 @@
 import numpy as np
 
+from tqdm import tqdm
+
 from hyper.hypervector import BipolarHypervector
 
 
