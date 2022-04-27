@@ -1,4 +1,13 @@
-import re 
+import re, sys 
+
+import numpy as np
+
+from sklearn.manifold import TSNE
+
+from tqdm import tqdm
+
+from matplotlib import pyplot as plt
+from matplotlib import colors as mcolors
 
 from unidecode import unidecode
 
@@ -12,7 +21,7 @@ class LanguageGeometryWithRandomIndexing():
 		'bul_news_2020_10K',
 		'ces_news_2020_10K',
 		'dan_news_2020_10K',
-		'deu_news_2021_10K',
+		'deu_news_2020_10K',
 		'ell_news_2020_10K',
 		'eng_news_2020_10K',
 		'est_news_2020_10K',
@@ -56,7 +65,7 @@ class LanguageGeometryWithRandomIndexing():
 
 		# replace sequences of characters outside of ALPHABET
 		# with a single space character 
-		unidecoded = regex.sub( ' ', unidecoded )
+		unidecoded = self._regex.sub( ' ', unidecoded )
 
 		return unidecoded
 
@@ -64,11 +73,11 @@ class LanguageGeometryWithRandomIndexing():
 
 		text = self.preprocess( sentence.split( '\t' )[ 1 ] )
 
-		return self._encoding.encode( text )
+		return self._encoding.encode( text, progressbar=False )
 
 	def encodelang( self, langidx ):
 
-		langfile = LANGUAGE_FILES[ langidx ]
+		langfile = LanguageGeometryWithRandomIndexing.LANGUAGE_FILES[ langidx ]
 
 		with open( f'{self._datadir}/{langfile}/{langfile}-sentences.txt' ) as f:
 
@@ -79,6 +88,63 @@ class LanguageGeometryWithRandomIndexing():
 			[ langvector.add( self.encodesentence( line ) ) for line in f ]
 
 			return langvector.threshold()
+
+# https://wortschatz.uni-leipzig.de/en/download
+def main( datadir ):
+
+	langs = []
+
+	d = 10000
+
+	lgwri = LanguageGeometryWithRandomIndexing( datadir=datadir, d=d, n=4, rng=np.random.default_rng() )
+
+	i = 0
+	
+	for langfile in tqdm( LanguageGeometryWithRandomIndexing.LANGUAGE_FILES ):
+
+		langs.append( lgwri.encodelang( i ) )
+		i += 1
+
+	tsne = TSNE( n_components=2, perplexity=8, learning_rate='auto', metric='precomputed' )
+
+	M = np.zeros( ( len( langs ), len( langs ) ) )
+
+	for i, X in enumerate( langs ):
+
+		for j, Y in enumerate( langs ):
+
+			M[ i, j ] = BipolarHypervector.cosine( X, Y )
+
+	L_2d = tsne.fit_transform( M )
+
+	plt.scatter( L_2d[ :, 0 ], L_2d[ :, 1 ] )
+
+	for label, x, y in zip( LanguageGeometryWithRandomIndexing.LABELS, L_2d[ :, 0 ], L_2d[ :, 1 ] ):
+
+		plt.annotate(
+
+			label,
+			xy=( x, y ),
+			xytext=( -20, 20 ),
+			textcoords=  'offset points',
+			ha='right',
+			va='bottom',
+			bbox=dict( boxstyle='round, pad=0.5', fc='yellow', alpha=0.5 ),
+			arrowprops=dict( arrowstyle='->', connectionstyle='arc3, rad=0' ),
+			fontsize='x-large'
+
+		)
+
+	frame = plt.gca()
+
+	frame.axes.get_xaxis().set_ticks( [] )	
+	frame.axes.get_yaxis().set_ticks( [] )
+
+	plt.show()
+
+if __name__ == '__main__':
+	
+	main( datadir=sys.argv[ 1 ] )
 
 
 	

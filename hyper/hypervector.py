@@ -466,7 +466,6 @@ class BipolarHypervector( Hypervector ):
 
 		raise ValueError( f'X and Y must be {clazz.__name__}' )
 
-
 	def __len__( self ):
 		"""
 		It overrides the `__len__` magic function so that 

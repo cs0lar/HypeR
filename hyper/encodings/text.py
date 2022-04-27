@@ -120,7 +120,7 @@ class TextEncoding():
 			raise ValueError( f'key {e.args[ 0 ]} not in alphabet' )
 
 
-	def encode( self, text ):
+	def encode( self, text, progressbar=True ):
 		"""
 		It encodes a textual string as the sum of all its ngram sequences. Let the text be
 		'with great powers' and n=4 be the ngram size. The collection of ngrams is
@@ -162,7 +162,9 @@ class TextEncoding():
 		# the last block we computed
 		V = BipolarHypervector( hv=A._hv )
 		
-		[ A.add( self.encodeblock( text[ i ], text[ i+step ], V ) ) for i in tqdm( range( len( text )-step  ) ) ]
+		iterator = tqdm( range( len( text )-step  ) ) if progressbar else range( len( text )-step  )
+
+		[ A.add( self.encodeblock( text[ i ], text[ i+step ], V ) ) for i in iterator ]
 
 		return A.threshold()
 
