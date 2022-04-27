@@ -3,6 +3,7 @@ import re, sys
 import numpy as np
 
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 from tqdm import tqdm
 
@@ -12,7 +13,8 @@ from matplotlib import colors as mcolors
 from unidecode import unidecode
 
 from hyper.hypervector import BipolarHypervector
-from hyper.encodings.text import Alphabet, TextEncoding
+from hyper.encodings.text import Alphabet
+from hyper.encodings.language import LanguageEncoding
 
 class LanguageGeometryWithRandomIndexing():
 
@@ -55,11 +57,13 @@ class LanguageGeometryWithRandomIndexing():
 
 		self._datadir = datadir
 		self._alphabet = Alphabet( d=d, rng=rng )
-		self._encoding = TextEncoding( self._alphabet, n )
+		self.encoding = LanguageEncoding( self._alphabet, n, preprocessor=self.preprocess )
 		self._regex = re.compile( r'[\W\d\s]+' )
 
 	def preprocess( self, text ):
 
+		text = text.split( '\t' )[ 1 ] 
+		
 		# try to convert unicode character to ASCII characters
 		unidecoded = unidecode( text.lower() )
 
@@ -69,25 +73,6 @@ class LanguageGeometryWithRandomIndexing():
 
 		return unidecoded
 
-	def encodesentence( self, sentence ):
-
-		text = self.preprocess( sentence.split( '\t' )[ 1 ] )
-
-		return self._encoding.encode( text, progressbar=False )
-
-	def encodelang( self, langidx ):
-
-		langfile = LanguageGeometryWithRandomIndexing.LANGUAGE_FILES[ langidx ]
-
-		with open( f'{self._datadir}/{langfile}/{langfile}-sentences.txt' ) as f:
-
-			# encode the first sentence
-			langvector = self.encodesentence( f.readline() )
-
-			# create a language vector by summing all the encoded text samples
-			[ langvector.add( self.encodesentence( line ) ) for line in f ]
-
-			return langvector.threshold()
 
 # https://wortschatz.uni-leipzig.de/en/download
 def main( datadir ):
@@ -102,45 +87,53 @@ def main( datadir ):
 	
 	for langfile in tqdm( LanguageGeometryWithRandomIndexing.LANGUAGE_FILES ):
 
-		langs.append( lgwri.encodelang( i ) )
+		file = f'{datadir}/{langfile}/{langfile}-sentences.txt'
+
+		langs.append( lgwri.encoding.encode( file ) )
+
 		i += 1
 
-	tsne = TSNE( n_components=2, perplexity=8, learning_rate='auto', metric='precomputed' )
+	idx = LanguageEncoding.index( langs, d )
 
-	M = np.zeros( ( len( langs ), len( langs ) ) )
+	inferred = LanguageEncoding.find( langs[ 0 ], idx )
 
-	for i, X in enumerate( langs ):
+	print ( inferred )
+	# tsne = TSNE( n_components=2, perplexity=8, learning_rate='auto', metric='precomputed', square_distances=True )
 
-		for j, Y in enumerate( langs ):
+	# M = np.zeros( ( len( langs ), len( langs ) ) )
 
-			M[ i, j ] = BipolarHypervector.cosine( X, Y )
+	# for i, X in enumerate( langs ):
 
-	L_2d = tsne.fit_transform( M )
+	# 	for j, Y in enumerate( langs ):
 
-	plt.scatter( L_2d[ :, 0 ], L_2d[ :, 1 ] )
+	# 		M[ i, j ] = BipolarHypervector.cosine( X, Y )
 
-	for label, x, y in zip( LanguageGeometryWithRandomIndexing.LABELS, L_2d[ :, 0 ], L_2d[ :, 1 ] ):
+	# L_2d = tsne.fit_transform( 1.- M )
 
-		plt.annotate(
+	# plt.scatter( L_2d[ :, 0 ], L_2d[ :, 1 ] )
 
-			label,
-			xy=( x, y ),
-			xytext=( -20, 20 ),
-			textcoords=  'offset points',
-			ha='right',
-			va='bottom',
-			bbox=dict( boxstyle='round, pad=0.5', fc='yellow', alpha=0.5 ),
-			arrowprops=dict( arrowstyle='->', connectionstyle='arc3, rad=0' ),
-			fontsize='x-large'
+	# for label, x, y in zip( LanguageGeometryWithRandomIndexing.LABELS, L_2d[ :, 0 ], L_2d[ :, 1 ] ):
 
-		)
+	# 	plt.annotate(
 
-	frame = plt.gca()
+	# 		label,
+	# 		xy=( x, y ),
+	# 		xytext=( -20, 20 ),
+	# 		textcoords=  'offset points',
+	# 		ha='right',
+	# 		va='bottom',
+	# 		bbox=dict( boxstyle='round, pad=0.5', fc='yellow', alpha=0.5 ),
+	# 		arrowprops=dict( arrowstyle='->', connectionstyle='arc3, rad=0' ),
+	# 		fontsize='x-large'
 
-	frame.axes.get_xaxis().set_ticks( [] )	
-	frame.axes.get_yaxis().set_ticks( [] )
+	# 	)
 
-	plt.show()
+	# frame = plt.gca()
+
+	# frame.axes.get_xaxis().set_ticks( [] )	
+	# frame.axes.get_yaxis().set_ticks( [] )
+
+	# plt.show()
 
 if __name__ == '__main__':
 	

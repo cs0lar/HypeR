@@ -575,13 +575,14 @@ class BipolarHypervector( Hypervector ):
 
 	def add( self, other ):
 		"""
-		Convenience method that adds a bipolar vector to `self`, useful for 
+		Convenience method that adds a bipolar vector to `self` in-place, useful for 
 		speeding up iterated sums.
 
 		Parameters
 		----------
 
 		other : BipolarHypervector
+
 		"""
 		self._hv = np.add( self._hv, other._hv )
 
