@@ -202,4 +202,7 @@ class TextEncoding():
 		return A
 
 
+	
+
+
 
