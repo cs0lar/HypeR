@@ -6,7 +6,7 @@ from bitarray import bitarray
 
 from tqdm import tqdm
 
-from hyper.hypervector import Permutation, BinaryHypervector, BipolarHypervector
+from hyper.hypervector import BinaryHypervector, BipolarHypervector
 
 import matplotlib.pyplot as plt
 
@@ -119,6 +119,7 @@ class TestBinaryHipervector( unittest.TestCase ):
 		plt.ylim( 0, 100 )
 		plt.xticks( np.linspace( 0, 1., 5 ) )
 		plt.savefig( 'testbinarynew.png' )
+		plt.clf()
 
 
 
@@ -163,31 +164,20 @@ class TestBipolaripervector( unittest.TestCase ):
 		plt.ylim( 0, 100 )
 		plt.xticks( np.linspace( -.5, .5, 5 ) )
 		plt.savefig( 'testbipolarnew.png' )
+		plt.clf()
 
 
 	def testPermute( self ):
 
-		numPerms = 4
-		dims = 10000
+		D = BipolarHypervector( hv=np.array( [ -1, -1, -1, -1, 1, 1, -1, -1, 1, 1 ] ) )
 
-		rng = np.random.default_rng()
+		expected = BipolarHypervector( hv=np.array( [ -1, 1, 1, -1, -1, -1, -1, 1, 1, -1 ] ) )
+		
+		actual = D.permute( c=3 )
 
-		perms = Permutation( rng=rng )
+		self.assertEqual( actual, expected )
+		self.assertEqual( D, expected )
 
-		perms.generate( dims, numPerms )
-
-		basePerm = perms[ 0 ]
-
-		hv = BipolarHypervector.new( dims, rng )._hv
-		v = np.array( hv )
-
-		for i in range( numPerms ):
-			
-			w = BipolarHypervector( hv=hv )
-
-			self.assertEqual( w.permute( perms, c=i ), BipolarHypervector( hv=v ) )
-
-			v = v[ basePerm ]
 
 	def testCosine( self ):
 
@@ -210,7 +200,7 @@ class TestBipolaripervector( unittest.TestCase ):
 	
 		expected = BipolarHypervector( hv=np.array( [ -1, -1, 1, -1, 1, -1, -1, 1, -1, 1 ] ) ) 
 
-		actual = BipolarHypervector.sum( A, B, C )
+		actual = BipolarHypervector.sum( A, B, C ).threshold()
 
 		self.assertEqual( actual, expected )
 		
@@ -226,7 +216,7 @@ class TestBipolaripervector( unittest.TestCase ):
 
 		A, B, C = [ BipolarHypervector.new( dims, rng ) for i in range( 3 ) ] 
 
-		Z = BipolarHypervector.sum( A, B, C )
+		Z = BipolarHypervector.sum( A, B, C ).threshold()
 
 		for V in [ A, B, C ]:
 

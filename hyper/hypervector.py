@@ -5,104 +5,6 @@ import numpy as np
 from bitarray import bitarray
 from bitarray.util import count_xor
 
-class Permutation:
-	"""
-	Utility class to generate fixed, pre-computed permutations as lists
-	of integers. When encoding sequences in Hyperdimensional computing
-	a permutation operator is applied multiple times to a given vector
-	depending on its position in the sequence. For example, if an n-gram
-	of length 4 like GRAB is being encoded, the vector corresponding to 
-	the G character will be permuted three times: \rho( \rho( \rho( G ) ) ). 
-	Note that the permutation is fixed and simply applied multiple times.
-	After the `generate` method is executed, the fixed, base permutation 
-	can be retrieved at index 0 of the `Permutation` object: i.e. `perm[0]`.
-	If `n` > 1 is supplied to the `generate` method, then `perm[ i ]` for 
-	`i` \in { 1, ..., n-1 } will return a permutation that when applied 
-	to input X is equivalent to applying the base permutation on
-	X i+1 times, for example ( with a slight abuse of notation ), 
-	`perm[ 1 ]`( X ) = `perm[ 0 ]`( `perm[ 0 ]`( X ) ).
-
-	Attributes
-	----------
-
-	_rng : Generator
-		A random number generator for generating random permutations. Default is `None`.
-
-	_perms : list 
-		A list where each element is a permutation in the form of a list {\rho(0}, ..., \rho(m}}
-		where \rho: {1, ..., m} -> {1, ..., m}.
-
-	Methods
-	-------
-
-	generate( d, n )
-		It generates a base permutation \rho of length `d` and pre-computes additional n-1
-		compositions of the base permutation such that `perm[ i ]`( X ) = \rho^{i+1}( X )
-		e.g. `perm[ 2 ]`( X ) = \rho( \rho( \rho( X ) ) ).
- 
-	"""
-
-	def __init__( self, rng=None ):
-		"""
-		Creates a new `Permutation` using an optionally 
-		given random number `Generator`.
-
-		Parameters
-		----------
-
-		rng : Generator
-			A `Generator` to use for generating random permutations. 
-			If `None` is passed, a default `Generator` is instantiated.
-
-		"""
-		if rng is None:
-			rng = np.random.default_rng()
-
-		self._rng = rng
-
-
-	def generate( self, d, n ):
-		"""
-		It generates a base permutation \rho of length `d` and pre-computes additional n-1
-		compositions of the base permutation such that `perm[ i ]`( X ) = \rho^{i+1}( X )
-		e.g. `perm[ 2 ]`( X ) = \rho( \rho( \rho( X ) ) ).
-
-		Parameters
-		----------
-
-		d : int
-			The dimensionality of the permutation map.
-
-		n : int
-			The total number of permutations to pre-compute.
-
-		Returns
-		-------
-
-		Permutation
-			It returns itself after the underlying list of permutations has been computed.
-
-		"""
-		perm = self._rng.permutation( d )
-		self._perms = [ np.zeros( ( 1, d ), dtype=int ) ]
-
-		self._perms[ 0 ] = perm
-
-		[ self._perms.append( self._perms[ i ][ perm ] ) for i in range( n - 1 ) ]
-
-		return self
-
-
-	def __getitem__( self, i ):
-
-		return self._perms[ i ]
-
-
-	def __len__( self ):
-
-		return len( self._perms )
-
-
 class Hypervector:
 	"""
 	Base class for all hyper vector types ( e.g. binary, bipolar, integer )
@@ -350,7 +252,7 @@ class BinaryHypervector( Hypervector ):
 			if ( len( vecs ) % 2 ) == 0:
 				# to avoid 0 bias when the number of hypervectors to sum 
 				# is even, we add a random hypervector to make the number odd.
-				vecs.append( BinaryHypervector.new( l ) )
+				vecs.append( BinaryHypervector.new( l, np.random.default_rng() ) )
 
 			hv = bitarray( [ BinaryHypervector.majority( bitarray( [ vec[ i ] for vec in vecs ] ) ) for i in range( l ) ] )
 
@@ -490,7 +392,13 @@ class BipolarHypervector( Hypervector ):
 		Static method that performs the binding operation which for bipolar hypervectors 
 		takes of element-wise product.
 
-	
+	threshold( )
+		It threholds the underlying numpy array to bipolar values. Useful after iterated
+		`BypolarHypervector` sums.
+
+	add( B )
+		It adds `B` bipolar values to `self`.
+
 	"""
 	def __init__( self, hv ):
 
@@ -558,7 +466,6 @@ class BipolarHypervector( Hypervector ):
 
 		raise ValueError( f'X and Y must be {clazz.__name__}' )
 
-
 	def __len__( self ):
 		"""
 		It overrides the `__len__` magic function so that 
@@ -574,18 +481,13 @@ class BipolarHypervector( Hypervector ):
 		return len( self._hv )
 
 
-	def permute( self, perm, c=1 ):
+	def permute( self, c=1 ):
 		"""
-		It computes a permutation of the underlying numpy array based on 
-		the given, fixed `Permutation` `perm`. The fixed permutation is 
-		applied `c` times.
+		It computes a permutation of the underlying numpy array using right-cyclic shift
+		(rotate by one coordinate position). The permutation is applied `c` times.
 
 		Parameters
 		----------
-
-		perm: Permutation
-			A `Permutation` object supplying permutations as lists of
-			integers of length equal to the dimensionality of this hypervector.
 
 		c : int
 			The number of permutations to apply.
@@ -598,19 +500,7 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if not isinstance( perm, Permutation ):
-
-			raise ValueError( 'perm must be an instance of Permutation' )
-
-		if c >= 1:
-
-			permutation = perm[ c-1 ]
-
-			if len( permutation ) != len( self ):
-
-				raise ValueError( f'perm must contain permutations of length {len( self )}' )
-
-			self._hv = self._hv[ permutation ]
+		self._hv = np.concatenate( ( self._hv[ -c: ], self._hv[ :-c ] ) )
 
 		return self
 
@@ -653,11 +543,10 @@ class BipolarHypervector( Hypervector ):
 
 		raise False
 
-
-	@classmethod
-	def sum( clazz, *args ):
+	@staticmethod
+	def sum( *args ):
 		"""
-		It computes the thresholded, element-wise sum of an arbitrary number of 
+		It computes the element-wise sum of an arbitrary number of 
 		BipolarHypervectors.
 
 		Parameters
@@ -670,26 +559,56 @@ class BipolarHypervector( Hypervector ):
 		-------
 
 		BipolarHypervector
-			A new BipolarHypervector representing the thresholded, element-wise sum 
+			A new BipolarHypervector representing the element-wise sum 
 			of the input BipolarHypervectors.
 
 		"""
 
-		if Hypervector.check( clazz.__name__, *args ):
+		if len( args ) == 2:
+			return BipolarHypervector( hv=np.add( args[0]._hv, args[1]._hv ) )
+		
+		hv = np.vstack( [ arg._hv for arg in args ] )
+		
+		hv = np.sum( hv, axis=0, dtype='int32' )
 
-			hv = np.vstack( [ arg._hv for arg in args ] )
-			
-			hv = np.sum( hv, axis=0, dtype='int32' )
+		return BipolarHypervector( hv=hv )
 
-			hv[ hv > 0 ] = 1
-			hv[ hv <= 0 ] = -1
-			
-			return clazz( hv=hv )
+	def add( self, other ):
+		"""
+		Convenience method that adds a bipolar vector to `self` in-place, useful for 
+		speeding up iterated sums.
 
-		raise ValueError( f'All inputs must be {clazz.__name__}' )
+		Parameters
+		----------
 
-	@classmethod
-	def mul( clazz, A, B ):
+		other : BipolarHypervector
+
+		"""
+		self._hv = np.add( self._hv, other._hv )
+
+	def threshold( self ):
+		"""
+		It thresholds the underlying numpy array so that each value is bipolar.
+		This is decoupled from the `sum` method in order to support iterated 
+		sums and thresholding of the final result as otherwise sums of thresholded
+		vectors might converge very quickly.
+
+		Returs
+		-------
+		
+		BipolarHypervector
+			It returns `self` with the underlying numpy array thrsholded to bipolar values,
+			specifically, values greater than 0 are thresholded to 1 and values equal to
+			or less than 0 are thresholded to -1.
+
+		"""
+		self._hv[ self._hv > 0 ] = 1
+		self._hv[ self._hv <= 0 ] = -1
+
+		return self
+
+	@staticmethod
+	def mul( A, B ):
 		"""
 		It performs a binding operation, binding A and B together for form X = A*B.
 		For bipolar hypervectors the binding operation is element-wise multiplication.
@@ -711,11 +630,7 @@ class BipolarHypervector( Hypervector ):
 
 		"""
 
-		if Hypervector.check( clazz.__name__, A, B ):
-			
-			return clazz( hv=np.multiply( A._hv, B._hv, dtype='int32' ) )
-		
-		raise ValueError( f'A and B must be {clazz.__name__}' )
+		return BipolarHypervector( hv=A._hv * B._hv )
 
 		
 
