@@ -15,7 +15,7 @@ setup(
     name='HypeR',
     packages=['hyper'],
     description='A simple library of Hyperdimensional Computing',
-    version='0.0.1',
+    version='1.0.0',
     url='https://github.com/cs0lar/HypeR',
     author='cristiano.solarino@gmail.com',
     author_email='cristiano.solarino@gmail.com',
