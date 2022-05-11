@@ -359,6 +359,18 @@ class BinaryHypervector( Hypervector ):
 
 		raise False
 
+	def __hash__( self ):
+		"""
+		It overrides the magic `__hash__` function in order to support 
+		using `BinaryHypervector`s as keys in dictionaries.
+
+		Returns
+		-------
+
+		int : the hash value of the object
+
+		"""
+		return hash( self._hv )
 
 class BipolarHypervector( Hypervector ):
 	"""
@@ -542,6 +554,19 @@ class BipolarHypervector( Hypervector ):
 			return np.array_equal( self._hv, other._hv )
 
 		raise False
+
+	def __hash__( self ):
+		"""
+		It overrides the magic `__hash__` function in order to support 
+		using `BipolarHypervector`s as keys in dictionaries.
+
+		Returns
+		-------
+
+		int : the hash value of the object
+
+		"""
+		return hash( self._hv.tostring() )
 
 	@staticmethod
 	def sum( *args ):
