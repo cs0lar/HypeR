@@ -180,7 +180,7 @@ def detectlang( sentence, lgwri ):
 
 if __name__ == '__main__':
 	
-	lgwri = buildlangvecs( datadir=sys.argv[ 1 ] )
+	lgwri = buildlangvecs( datadir=sys.argv[ 1 ], show=True )
 
 	matches = 0
 	sentences = 0
